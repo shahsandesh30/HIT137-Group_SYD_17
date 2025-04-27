@@ -69,14 +69,14 @@ def main():
     m = int(input("Enter value of m: "))
 
     # Read the raw text from the file
-    with open("raw_text.txt", "r") as file:
+    with open("./data_files/raw_text.txt", "r") as file:
         raw_text = file.read()
 
     # Encrypt the raw text
     encrypted_text = encrypt_text(raw_text, n, m)
 
     # Write the encrypted text to a new  txt file
-    with open("encrypted_text.txt", "w") as file:
+    with open("./result_files/encrypted_text.txt", "w") as file:
         file.write(encrypted_text)
 
     print(f"Encrypted text: {encrypted_text}")
