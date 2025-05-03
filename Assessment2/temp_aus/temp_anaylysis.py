@@ -40,3 +40,29 @@ def calculate_seasonal_averages(data):
             temps = seasonal_data[season]
             avg_temp = sum(temps) / len(temps) if temps else 0
             file.write(f"{season}: {avg_temp:.2f}°C\n")
+            
+
+def find_largest_temp_range(data):
+    station_temps = defaultdict(list)
+
+    for row in data:
+        station = row['Station']
+        temp = float(row['Temperature'])
+        station_temps[station].append(temp)
+
+    max_range = -1
+    stations_with_max_range = []
+
+    for station, temps in station_temps.items():
+        if temps:
+            temp_range = max(temps) - min(temps)
+            if temp_range > max_range:
+                max_range = temp_range
+                stations_with_max_range = [station]
+            elif temp_range == max_range:
+                stations_with_max_range.append(station)
+
+    with open(os.path.join(OUTPUT_FOLDER, 'largest_temp_range_station.txt'), 'w') as file:
+        file.write(f"Largest Temperature Range: {max_range:.2f}°C\n")
+        for s in stations_with_max_range:
+            file.write(f"{s}\n")
