@@ -3,111 +3,127 @@ import csv
 from collections import defaultdict
 
 # Folder where temperature CSV files are stored
-TEMPERATURE_FOLDER = '../data_files/temperature_data'
-OUTPUT_FOLDER = './analysis'
+temperature_data_path = '../data_files/temperature_data'
 
-# Mapping months to seasons in Australia
-SEASON_MAP = {
-    '12': 'Summer', '01': 'Summer', '02': 'Summer',
-    '03': 'Autumn', '04': 'Autumn', '05': 'Autumn',
-    '06': 'Winter', '07': 'Winter', '08': 'Winter',
-    '09': 'Spring', '10': 'Spring', '11': 'Spring'
-}
 
-def read_temperature_data():
-    data = []
-    for filename in os.listdir(TEMPERATURE_FOLDER):
-        if filename.endswith('.csv'):
-            with open(os.path.join(TEMPERATURE_FOLDER, filename), 'r') as file:
-                reader = csv.DictReader(file)
-                for row in reader:
-                    data.append(row)
-    return data
+import os
+import csv
+from collections import defaultdict
+
+def read_temperature_data(folder_path):
+    station_data = defaultdict(list)
+    try:
+        for filename in os.listdir(folder_path):
+            if filename.endswith(".csv"):
+                file_path = os.path.join(folder_path, filename)
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    reader = csv.DictReader(file)
+                    for row in reader:
+                        try:
+                            station = row['STATION_NAME']
+                            monthly_temps = [float(row[month]) for month in [
+                                'January', 'February', 'March', 'April', 'May', 'June',
+                                'July', 'August', 'September', 'October', 'November', 'December'] if row[month]]
+                            if len(monthly_temps) == 12:
+                                station_data[station].append(monthly_temps)
+                        except (ValueError, KeyError):
+                            continue
+        return station_data
+    except Exception as e:
+        print(f"Error reading files: {e}")
+        return {}
 
 def calculate_seasonal_averages(data):
-    seasonal_data = defaultdict(list)
+    seasons = {
+        'Summer': [11, 0, 1],
+        'Autumn': [2, 3, 4],
+        'Winter': [5, 6, 7],
+        'Spring': [8, 9, 10]
+    }
+    season_totals = defaultdict(float)
+    season_counts = defaultdict(int)
 
-    for row in data:
-        date = row['Date']
-        temp = float(row['Temperature'])
-        month = date.split('-')[1]
-        season = SEASON_MAP.get(month)
-        if season:
-            seasonal_data[season].append(temp)
+    for records in data.values():
+        for year in records:
+            for season, indices in seasons.items():
+                try:
+                    temps = [year[i] for i in indices]
+                    season_totals[season] += sum(temps)
+                    season_counts[season] += len(temps)
+                except IndexError:
+                    continue
 
-    with open(os.path.join(OUTPUT_FOLDER, 'average_temp.txt'), 'w') as file:
-        for season in ['Summer', 'Autumn', 'Winter', 'Spring']:
-            temps = seasonal_data[season]
-            avg_temp = sum(temps) / len(temps) if temps else 0
-            file.write(f"{season}: {avg_temp:.2f}°C\n")
-            
+    try:
+        with open("./analysis/average_temp.txt", 'w') as f:
+            for season in seasons:
+                if season_counts[season] > 0:
+                    avg = season_totals[season] / season_counts[season]
+                    f.write(f"{season}: {avg:.2f}\n")
+    except Exception as e:
+        print(f"Error writing seasonal averages: {e}")
 
 def find_largest_temp_range(data):
-    station_temps = defaultdict(list)
-
-    for row in data:
-        station = row['Station']
-        temp = float(row['Temperature'])
-        station_temps[station].append(temp)
-
     max_range = -1
-    stations_with_max_range = []
+    stations = []
 
-    for station, temps in station_temps.items():
+    for station, records in data.items():
+        all_temps = [temp for year in records for temp in year]
+        if not all_temps:
+            continue
+        temp_range = max(all_temps) - min(all_temps)
+        if temp_range > max_range:
+            max_range = temp_range
+            stations = [station]
+        elif temp_range == max_range:
+            stations.append(station)
+
+    try:
+        with open("./analysis/largest_temp_range_station.txt", 'w') as f:
+            for station in stations:
+                f.write(f"{station}\n")
+    except Exception as e:
+        print(f"Error writing temp range file: {e}")
+
+def find_warmest_and_coolest(data):
+    averages = {}
+    for station, records in data.items():
+        temps = [temp for year in records for temp in year]
         if temps:
-            temp_range = max(temps) - min(temps)
-            if temp_range > max_range:
-                max_range = temp_range
-                stations_with_max_range = [station]
-            elif temp_range == max_range:
-                stations_with_max_range.append(station)
+            avg = sum(temps) / len(temps)
+            averages[station] = avg
 
-    with open(os.path.join(OUTPUT_FOLDER, 'largest_temp_range_station.txt'), 'w') as file:
-        file.write(f"Largest Temperature Range: {max_range:.2f}°C\n")
-        for s in stations_with_max_range:
-            file.write(f"{s}\n")
-            
-def find_warmest_and_coolest_stations(data):
-    station_avg_temp = defaultdict(list)
-
-    for row in data:
-        station = row['Station']
-        temp = float(row['Temperature'])
-        station_avg_temp[station].append(temp)
-
-    station_avg = {
-        station: sum(temps)/len(temps)
-        for station, temps in station_avg_temp.items()
-    }
-
-    if not station_avg:
+    if not averages:
         return
 
-    max_temp = max(station_avg.values())
-    min_temp = min(station_avg.values())
+    max_avg = max(averages.values())
+    min_avg = min(averages.values())
 
-    warmest = [s for s, avg in station_avg.items() if avg == max_temp]
-    coolest = [s for s, avg in station_avg.items() if avg == min_temp]
-
-    with open(os.path.join(OUTPUT_FOLDER, 'warmest_and_coolest_station.txt'), 'w') as file:
-        file.write(f"Warmest Station(s): {max_temp:.2f}°C\n")
-        for s in warmest:
-            file.write(f"{s}\n")
-
-        file.write(f"\nCoolest Station(s): {min_temp:.2f}°C\n")
-        for s in coolest:
-            file.write(f"{s}\n")
+    try:
+        with open("./analysis/warmest_and_coolest_station.txt", 'w') as f:
+            f.write("Warmest Station(s):\n")
+            for station, avg in averages.items():
+                if avg == max_avg:
+                    f.write(f"{station}\n")
+            f.write("\nCoolest Station(s):\n")
+            for station, avg in averages.items():
+                if avg == min_avg:
+                    f.write(f"{station}\n")
+    except Exception as e:
+        print(f"Error writing warmest/coolest station: {e}")
 
 def main():
-    os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+    if not os.path.exists(temperature_data_path):
+        print(f"Folder not found: {temperature_data_path}")
+        return
 
-    data = read_temperature_data()
+    data = read_temperature_data(temperature_data_path)
+    if not data:
+        print("No valid data found.")
+        return
 
     calculate_seasonal_averages(data)
     find_largest_temp_range(data)
-    find_warmest_and_coolest_stations(data)
-
-    print("Analysis complete. Results saved in 'analysis/' folder.")
+    find_warmest_and_coolest(data)
 
 if __name__ == "__main__":
     main()
