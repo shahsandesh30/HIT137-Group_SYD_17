@@ -66,3 +66,48 @@ def find_largest_temp_range(data):
         file.write(f"Largest Temperature Range: {max_range:.2f}°C\n")
         for s in stations_with_max_range:
             file.write(f"{s}\n")
+            
+def find_warmest_and_coolest_stations(data):
+    station_avg_temp = defaultdict(list)
+
+    for row in data:
+        station = row['Station']
+        temp = float(row['Temperature'])
+        station_avg_temp[station].append(temp)
+
+    station_avg = {
+        station: sum(temps)/len(temps)
+        for station, temps in station_avg_temp.items()
+    }
+
+    if not station_avg:
+        return
+
+    max_temp = max(station_avg.values())
+    min_temp = min(station_avg.values())
+
+    warmest = [s for s, avg in station_avg.items() if avg == max_temp]
+    coolest = [s for s, avg in station_avg.items() if avg == min_temp]
+
+    with open(os.path.join(OUTPUT_FOLDER, 'warmest_and_coolest_station.txt'), 'w') as file:
+        file.write(f"Warmest Station(s): {max_temp:.2f}°C\n")
+        for s in warmest:
+            file.write(f"{s}\n")
+
+        file.write(f"\nCoolest Station(s): {min_temp:.2f}°C\n")
+        for s in coolest:
+            file.write(f"{s}\n")
+
+def main():
+    os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+
+    data = read_temperature_data()
+
+    calculate_seasonal_averages(data)
+    find_largest_temp_range(data)
+    find_warmest_and_coolest_stations(data)
+
+    print("Analysis complete. Results saved in 'analysis/' folder.")
+
+if __name__ == "__main__":
+    main()
