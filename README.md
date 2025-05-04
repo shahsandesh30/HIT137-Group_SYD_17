@@ -23,3 +23,8 @@ python enc_dec/enc_dec.py
  ```bash
  python tree_pattern/tree_pattern_turtle.py
  ```
+
+### 4. To Draw Tree for Question 3
+
+```bash
+winpty python tree/tree.py
