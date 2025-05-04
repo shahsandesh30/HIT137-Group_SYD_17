@@ -17,3 +17,9 @@ python enc_dec/enc_dec.py
  ```bash
  python temp_aus/temp_analysis.py
  ```
+
+### 3. To Draw Tree Pattern 
+
+ ```bash
+ python tree_pattern/tree_pattern_turtle.py
+ ```
