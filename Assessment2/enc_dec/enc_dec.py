@@ -1,3 +1,5 @@
+import os
+
 def encrypt_text(text, n, m):
     code = ""
     for t in text:
@@ -68,16 +70,22 @@ def main():
     n = int(input("Enter value of n: "))
     m = int(input("Enter value of m: "))
 
+    current_dir = os.path.dirname(__file__) # current directory path
+    parent_dir = os.path.dirname(current_dir)
+    
+    raw_datafile_dir = os.path.join(parent_dir, "data_files","raw_text.txt") # data_files directory path
+    
     # Read the raw text from the file
-    with open("../data_files/raw_text.txt", "r") as file:
+    with open(raw_datafile_dir, "r") as file:
         raw_text = file.read()
 
 
     # Encrypt the raw text
     encrypted_text = encrypt_text(raw_text, n, m)
 
+    enc_datafile_dir = os.path.join(current_dir, "result_files","encrypted_text.txt") 
     # Write the encrypted text to a new  txt file
-    with open("./result_files/encrypted_text.txt", "w") as file:
+    with open(enc_datafile_dir, "w") as file:
         file.write(encrypted_text)
 
     print(f"Encrypted text: {encrypted_text}")
