@@ -9,7 +9,7 @@ branch_reduction_factor = float(input("Branch length reduction factor(1-100): ")
 
 # create and setup turtle
 t = Turtle()
-t.speed(10)
+t.speed("fastest")
 t.left(90)
 
 # recursive function to draw tree pattern

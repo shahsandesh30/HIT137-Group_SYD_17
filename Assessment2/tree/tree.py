@@ -4,7 +4,8 @@ def draw_branch(length, recursion_depth, max_depth, angle_left, angle_right, red
     if recursion_depth == 0 or length < 2:
         return
 
-    # Color and thickness based on depth
+    # Color and thickness based on recursion depth
+    # Set brown color for main stem and green for other branches
     if recursion_depth == max_depth:
         trl.color("brown")
         trl.pensize(length/10)
@@ -14,7 +15,7 @@ def draw_branch(length, recursion_depth, max_depth, angle_left, angle_right, red
 
     trl.forward(length)
 
-    # Save position and heading
+    # Save location and the direction of the turtle
     position = trl.position()
     heading = trl.heading()
 
@@ -22,7 +23,7 @@ def draw_branch(length, recursion_depth, max_depth, angle_left, angle_right, red
     trl.left(angle_left)
     draw_branch(length * reduction_factor, recursion_depth - 1, max_depth, angle_left, angle_right, reduction_factor)
 
-    # Restore
+    # go back to the previous location followed by direction 
     trl.setposition(position)
     trl.setheading(heading)
 
@@ -30,7 +31,7 @@ def draw_branch(length, recursion_depth, max_depth, angle_left, angle_right, red
     trl.right(angle_right)
     draw_branch(length * reduction_factor, recursion_depth - 1, max_depth, angle_left, angle_right, reduction_factor)
 
-    # Return
+    # Return to the previous location
     trl.setposition(position)
     trl.setheading(heading)
 
@@ -52,4 +53,6 @@ trl.pendown()
 draw_branch(start_length, recursion_depth, recursion_depth, angle_left, angle_right, reduction_factor)
 
 trl.done()
-      
+
+
+'''To get the desired result from the code enter values as advised'''
