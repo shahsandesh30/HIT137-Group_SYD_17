@@ -30,35 +30,45 @@ def encrypt_text(text, n, m):
 
 
 def decrypt_text(encrypted_text, n, m, original_text):
-    code2 = ""
+    decrypted = ""
+
     for i in range(len(encrypted_text)):
-        d = encrypted_text[i]
-        t = original_text[i]  
+        e_char = encrypted_text[i]
+        o_char = original_text[i]
 
-        if 'a' <= d <= 'z':
-            ord_value = ord(d)
-            if t <= 'm':
-                cipher_value = ord_value - n * m # decrypting formula for a to m
-                cipher_value = (cipher_value - ord('a')) % 26 + ord('a') # Apply modulo if ASCII value exceeds 'z'
+        # Handle lowercase letters
+        if 'a' <= e_char <= 'z':
+            base = ord('a')
+            offset = ord(e_char) - base
+
+            if o_char <= 'm':
+                # Decrypt for 'a' to 'm' range using (ord - n * m)
+                new_offset = (offset - n * m) % 26
             else:
-                cipher_value = ord_value + (n + m) # decrypting formula for n to z
-                cipher_value = (cipher_value - ord('a')) % 26 + ord('a') # Apply modulo if ASCII value exceeds 'z'
-            code2 += chr(cipher_value)
+                # Decrypt for 'n' to 'z' range using (ord + n + m)
+                new_offset = (offset + (n + m)) % 26
 
-        elif 'A' <= d <= 'Z':
-            ord_value = ord(d)
-            if t <= 'M':
-                cipher_value = ord_value + n # decrypting formula for A to M
-                cipher_value = (cipher_value - ord('A')) % 26 + ord('A') # Apply modulo if ASCII value exceeds 'Z'
+            decrypted += chr(base + new_offset)
+
+        # Handle uppercase letters
+        elif 'A' <= e_char <= 'Z':
+            base = ord('A')
+            offset = ord(e_char) - base
+
+            if o_char <= 'M':
+                # Decrypt for 'A' to 'M' range using (ord + n)
+                new_offset = (offset + n) % 26
             else:
-                cipher_value = ord_value - m * m   # decrypting formula for N to Z
-                cipher_value = (cipher_value - ord('A')) % 26 + ord('A') # Apply modulo if ASCII value exceeds 'Z'
-            code2 += chr(cipher_value)
+                # Decrypt for 'N' to 'Z' range using (ord - m * m)
+                new_offset = (offset - m * m) % 26
 
+            decrypted += chr(base + new_offset)
+
+        # Non-alphabetic characters remain unchanged
         else:
-            code2 += d # characters remain same
+            decrypted += e_char
 
-    return code2
+    return decrypted
 
 
 def check_correctness(original, decrypted):
