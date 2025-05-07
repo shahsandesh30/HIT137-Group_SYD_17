@@ -11,15 +11,25 @@ This is the assessment repository for Software Now subject where Group 17 member
 ```bash 
 python enc_dec/enc_dec.py
  ```
+The encrypted text is saved in enc_dec/result_files/encrypted_text.txt file. 
 
 ### 2. For Australian Temperature analysis 
 
  ```bash
  python temp_aus/temp_analysis.py
  ```
+The analysis results of the temperature are saved inside temp_aus/analysis folder. 
 
 ### 3. To Draw Tree Pattern 
 
  ```bash
  python tree_pattern/tree_pattern_turtle.py
  ```
+This is the tree pattern generated using following values: <br>
+Left branch angle: 25   </br>
+Right branch angle: 20  </br>
+Starting branch length: 100 </br>
+Recursion depth: 5 </br>
+Branch length reduction factor(1-100): 70
+</br></br>
+ ![alt text](/Assessment2/data_files/tree_pattern.png)
