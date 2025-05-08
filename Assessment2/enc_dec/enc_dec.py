@@ -118,9 +118,9 @@ def main():
 
     # Check decrypted text matches the original
     if check_correctness(raw_text, decrypted_text):
-        print("The original text and decrypted text match.")
+        print("\nThe original text and decrypted text match.")
     else:
-        print("The original text and decrypted text donot match.")
+        print("\nThe original text and decrypted text donot match.")
 
 
 if __name__ == "__main__":
