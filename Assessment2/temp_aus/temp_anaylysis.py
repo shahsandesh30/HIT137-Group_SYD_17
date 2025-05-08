@@ -9,26 +9,51 @@ temperature_data_path = os.path.join(parent_dir, "data_files", "temperature_data
     
 
 # to read the temperature data from CSV files
+import os
+import csv
+
 def read_temperature_data(folder_path):
+    
+    """
+    Reads temperature data from all CSV files in the given folder.
+    
+    Each file is expected to have columns for 'STATION_NAME' and each month from January to December.
+    Returns a dictionary where keys are station names and values are lists of 12-element lists,
+    each containing monthly temperatures for one row (year) of data.
+    """
     station_data = {}
 
+    # make list of all the files in the folder
     for filename in os.listdir(folder_path):
         if filename.endswith(".csv"):
             file_path = os.path.join(folder_path, filename)
-            with open(file_path, 'r', encoding='utf-8') as file:
-                reader = csv.DictReader(file)
-                for row in reader:
-                    station = row['STATION_NAME']
-                    monthly_temps = [float(row[month]) for month in [
-                        'January', 'February', 'March', 'April', 'May', 'June',
-                        'July', 'August', 'September', 'October', 'November', 'December'
-                    ] if row[month]]
-                    
-                    if len(monthly_temps) == 12:
-                        # Initialize the list if the station is not already in the dictionary
-                        if station not in station_data:
-                            station_data[station] = []
-                        station_data[station].append(monthly_temps)
+            try:
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    reader = csv.DictReader(file)
+                    for row in reader:
+                        station = row.get('STATION_NAME', '').strip()
+                        
+                        if not station:
+                            continue  # skip the rows if there is no valid station available
+
+                        months = [
+                            'January', 'February', 'March', 'April', 'May', 'June',
+                            'July', 'August', 'September', 'October', 'November', 'December'
+                        ]
+
+                        try:
+                            # skip if any value is not available or not valid
+                            monthly_temps = [float(row[month]) for month in months if row[month].strip()]
+                        except (ValueError, KeyError):
+                            continue  # Skip this row if it can not do the conversion
+
+                        if len(monthly_temps) == 12:
+                            # Initialize station list if not already present
+                            if station not in station_data:
+                                station_data[station] = []
+                            station_data[station].append(monthly_temps)
+            except Exception as e:
+                print(f"Error reading file {file_path}: {e}")
 
     return station_data
 
