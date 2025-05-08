@@ -1,33 +1,45 @@
 import os
 
+# Function to encrypt a given text based on provided values n and m
 def encrypt_text(text, n, m):
     code = ""
+
     for t in text:
+        # Encrypt lowercase letters
         if 'a' <= t <= 'z':
             ord_value = ord(t)
+
             if t <= 'm':
-                cipher_value = ord_value + n * m  # encrypting formula for a to m
-                cipher_value = (cipher_value - ord('a')) % 26 + ord('a') # Apply modulo if ASCII value exceeds 'z'
+                # For 'a' to 'm': shift forward by n * m
+                cipher_value = ord_value + n * m
             else:
-                cipher_value = ord_value - (n + m) # encrypting formula for n to z
-                cipher_value = (cipher_value - ord('a')) % 26 + ord('a') # Apply modulo if ASCII value exceeds 'z'
+                # For 'n' to 'z': shift backward by (n + m)
+                cipher_value = ord_value - (n + m)
+
+            # Wrap around if needed using modulo 26
+            cipher_value = (cipher_value - ord('a')) % 26 + ord('a')
             code += chr(cipher_value)
 
+        # Encrypt uppercase letters
         elif 'A' <= t <= 'Z':
             ord_value = ord(t)
+
             if t <= 'M':
-                cipher_value = ord_value - n # encrypting formula for A to M
-                cipher_value = (cipher_value - ord('A')) % 26 + ord('A') # Apply modulo if ASCII value exceeds 'Z'
+                # For 'A' to 'M': shift backward by n
+                cipher_value = ord_value - n
             else:
-                cipher_value = ord_value + m * m    # encrypting formula for N to Z
-                cipher_value = (cipher_value - ord('A')) % 26 + ord('A') # Apply modulo if ASCII value exceeds 'Z'
+                # For 'N' to 'Z': shift forward by m * m
+                cipher_value = ord_value + m * m
+
+            # Wrap around if needed using modulo 26
+            cipher_value = (cipher_value - ord('A')) % 26 + ord('A')
             code += chr(cipher_value)
 
         else:
-            code += t # characters remain same
+            # Leave non-alphabetic characters unchanged
+            code += t
 
     return code
-
 
 def decrypt_text(encrypted_text, n, m, original_text):
     decrypted = ""
