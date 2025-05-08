@@ -152,7 +152,7 @@ def main():
         print("No valid data found.")
         return
 
-    os.makedirs("./temp_aus/analysis", exist_ok=True)
+    os.makedirs("./analysis", exist_ok=True)
     calculate_seasonal_averages(data)
     find_largest_temp_range(data)
     find_warmest_and_coolest(data)
