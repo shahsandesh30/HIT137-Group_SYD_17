@@ -32,4 +32,4 @@ Starting branch length: 100 </br>
 Recursion depth: 5 </br>
 Branch length reduction factor(1-100): 70
 </br></br>
- ![alt text](/Assessment2/data_files/tree_pattern.png)
+ ![alt text](/images/tree_pattern.png)

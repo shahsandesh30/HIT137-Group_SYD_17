@@ -114,13 +114,13 @@ def main():
     # Decrypt the text to check correctness
     decrypted_text = decrypt_text(encrypted_text, n, m, raw_text)
 
-    print(f"Decrypted text is : {decrypted_text}")
+    print(f"\nDecrypted text is : {decrypted_text}")
 
     # Check decrypted text matches the original
     if check_correctness(raw_text, decrypted_text):
-        print("The original text and decrypted text match.")
+        print("\nThe original text and decrypted text match.")
     else:
-        print("The original text and decrypted text donot match.")
+        print("\nThe original text and decrypted text donot match.")
 
 
 if __name__ == "__main__":
