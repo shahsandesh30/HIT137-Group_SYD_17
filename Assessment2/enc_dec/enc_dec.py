@@ -41,47 +41,47 @@ def encrypt_text(text, n, m):
 
     return code
 
+# Function to decrypt text using original text as reference for logic direction
 def decrypt_text(encrypted_text, n, m, original_text):
     decrypted = ""
 
     for i in range(len(encrypted_text)):
-        e_char = encrypted_text[i]
-        o_char = original_text[i]
+        e_char = encrypted_text[i]  # Current encrypted character
+        o_char = original_text[i]   # Original character for reference
 
-        # Handle lowercase letters
+        # Decrypt lowercase letters
         if 'a' <= e_char <= 'z':
             base = ord('a')
             offset = ord(e_char) - base
 
             if o_char <= 'm':
-                # Decrypt for 'a' to 'm' range using (ord - n * m)
+                # If original char was from 'a' to 'm', reverse encryption by subtracting n * m
                 new_offset = (offset - n * m) % 26
             else:
-                # Decrypt for 'n' to 'z' range using (ord + n + m)
+                # If original char was from 'n' to 'z', reverse by adding (n + m)
                 new_offset = (offset + (n + m)) % 26
 
             decrypted += chr(base + new_offset)
 
-        # Handle uppercase letters
+        # Decrypt uppercase letters
         elif 'A' <= e_char <= 'Z':
             base = ord('A')
             offset = ord(e_char) - base
 
             if o_char <= 'M':
-                # Decrypt for 'A' to 'M' range using (ord + n)
+                # If original char was from 'A' to 'M', reverse by adding n
                 new_offset = (offset + n) % 26
             else:
-                # Decrypt for 'N' to 'Z' range using (ord - m * m)
+                # If original char was from 'N' to 'Z', reverse by subtracting m squared
                 new_offset = (offset - m * m) % 26
 
             decrypted += chr(base + new_offset)
 
-        # Non-alphabetic characters remain unchanged
+        # Leave non-alphabetic characters unchanged
         else:
             decrypted += e_char
 
     return decrypted
-
 
 def check_correctness(original, decrypted):
     return original == decrypted
