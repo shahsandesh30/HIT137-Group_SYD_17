@@ -104,7 +104,7 @@ def main():
     decrypted_text = decrypt_text(encrypted_text, n, m, raw_text)
 
     # Print the decrypted text
-    print(f"Decrypted text: {decrypted_text}")
+    print(f"\nDecrypted text: {decrypted_text}")
 
     # Check if the decrypted text matches the original
     if check_correctness(raw_text, decrypted_text):
