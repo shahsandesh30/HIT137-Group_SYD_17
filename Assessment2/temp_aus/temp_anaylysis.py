@@ -8,7 +8,7 @@ parent_dir = os.path.dirname(current_dir)
 temperature_data_path = os.path.join(parent_dir, "data_files", "temperature_data")
     
 
-# to read the temperature data from CSV files
+# to read the temperature data from CSV files.
 def read_temperature_data(folder_path):
     station_data = {}
 
