@@ -1,1 +1,1 @@
-BOURKE-AIRPORT-AWS
+station with the largest temperature range: BOURKE-AIRPORT-AWS

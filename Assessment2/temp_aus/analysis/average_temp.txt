@@ -1,4 +1,4 @@
-Summer: 32.10
-Autumn: 27.32
-Winter: 21.07
-Spring: 27.43
+average Summer temperature: 32.10
+average Autumn temperature: 27.32
+average Winter temperature: 21.07
+average Spring temperature: 27.43
