@@ -16,8 +16,10 @@ t.left(90)
 def tree_pattern(t, start_branch_lenght, left_angle, right_angle, depth, reduction_factor, is_stem=True):
     if depth == 0 or start_branch_lenght < 1:
         return
+    
 #choosing color for stem and branch
-#decreasig width of the branch as it gets smaller 
+
+#decreasing width of the branch as it gets smaller 
     t.color("brown" if is_stem else "green")
     t.pensize(start_branch_lenght/10)
 
