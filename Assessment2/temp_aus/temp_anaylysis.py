@@ -33,38 +33,46 @@ def read_temperature_data(folder_path):
     return station_data
 
 
-# to calculate seasonal averages and write to a file
-def calculate_seasonal_averages(data):
-    seasons = {
-        'Summer': [11, 0, 1],
-        'Autumn': [2, 3, 4],
-        'Winter': [5, 6, 7],
-        'Spring': [8, 9, 10]
-    }
-    season_totals = {}
-    season_counts = {}
+import os
 
+# Function to calculate seasonal average temperatures and write to a file
+def calculate_seasonal_averages(data):
+    # Define which months belong to each season (using 0-based indexing)
+    seasons = {
+        'Summer': [11, 0, 1],   # December, January, February
+        'Autumn': [2, 3, 4],    # March, April, May
+        'Winter': [5, 6, 7],    # June, July, August
+        'Spring': [8, 9, 10]    # September, October, November
+    }
+
+    season_totals = {}  # To store total temperatures per season
+    season_counts = {}  # To store number of temperature readings per season
+
+    # Loop through all data (grouped by station or location)
     for records in data.values():
         for year in records:
             for season, indices in seasons.items():
+                # Get the temperature values for the current season
                 temps = [year[i] for i in indices]
 
-                # Initialize if not already in dictionary
+                # Initialize totals and counts if not already set
                 if season not in season_totals:
                     season_totals[season] = 0.0
                     season_counts[season] = 0
 
+                # Add temperature values to the totals
                 season_totals[season] += sum(temps)
                 season_counts[season] += len(temps)
 
+    # Define path to save the average temperature file
     average_temp_path = os.path.join(current_dir, "analysis", "average_temp.txt")
 
+    # Write average temperature per season to the file
     with open(average_temp_path, 'w') as f:
         for season in seasons:
-            if season in season_counts and season_counts[season] > 0:
+            if season_counts.get(season, 0) > 0:
                 avg = season_totals[season] / season_counts[season]
                 f.write(f"{season}: {avg:.2f}\n")
-
 
 # to find the station with the largest temperature range
 def find_largest_temp_range(data):
