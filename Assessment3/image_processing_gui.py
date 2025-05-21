@@ -1,15 +1,18 @@
 import tkinter as tk
 from tkinter import filedialog
 from PIL import Image, ImageTk
+import cv2
+import numpy as np
 
 class ImageProcessingApp:
     def __init__(self, master):
         self.master = master
         self.master.title("Image Processing GUI")
 
-        self.original_image = None
+        self.original_image = None      # PIL Image
         self.tk_image = None
         self.cropped_tk_image = None
+        self.cv_image = None           # OpenCV image (numpy array)
 
         # Canvas for original image and cropping
         self.canvas = tk.Canvas(master, width=400, height=300, cursor="cross")
@@ -34,10 +37,15 @@ class ImageProcessingApp:
             filetypes=[("Image files", "*.jpg *.jpeg *.png *.bmp *.gif")]
         )
         if file_path:
+            # Load using PIL for display
             self.original_image = Image.open(file_path).resize((400, 300))
             self.tk_image = ImageTk.PhotoImage(self.original_image)
             self.canvas.create_image(0, 0, anchor=tk.NW, image=self.tk_image)
             self.cropped_canvas.delete("all")  # Clear cropped canvas
+
+            # Also load as OpenCV image for cropping
+            pil_image = self.original_image.convert("RGB")
+            self.cv_image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
 
     def on_mouse_down(self, event):
         self.start_x, self.start_y = event.x, event.y
@@ -55,12 +63,17 @@ class ImageProcessingApp:
         self.crop_image()
 
     def crop_image(self):
-        if self.original_image:
+        if self.cv_image is not None:
             x1, y1 = min(self.start_x, self.end_x), min(self.start_y, self.end_y)
             x2, y2 = max(self.start_x, self.end_x), max(self.start_y, self.end_y)
-            # Crop using PIL
-            cropped = self.original_image.crop((x1, y1, x2, y2))
-            self.cropped_tk_image = ImageTk.PhotoImage(cropped)
+            # Crop using OpenCV (numpy slicing)
+            cropped_cv = self.cv_image[y1:y2, x1:x2]
+            if cropped_cv.size == 0:
+                return
+            # Convert back to PIL for display
+            cropped_rgb = cv2.cvtColor(cropped_cv, cv2.COLOR_BGR2RGB)
+            cropped_pil = Image.fromarray(cropped_rgb)
+            self.cropped_tk_image = ImageTk.PhotoImage(cropped_pil)
             self.cropped_canvas.delete("all")
             self.cropped_canvas.create_image(0, 0, anchor=tk.NW, image=self.cropped_tk_image)
             self.cropped_canvas.image = self.cropped_tk_image  # Keep reference
