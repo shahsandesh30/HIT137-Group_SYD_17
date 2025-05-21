@@ -33,3 +33,18 @@ Recursion depth: 5 </br>
 Branch length reduction factor(1-100): 70
 </br></br>
  ![alt text](/images/tree_pattern.png)
+
+
+ ## Assessment 3
+
+### 1. To run the Image Processing GUI (Question 1)
+
+1. Open the terminal in the "Assessment3" folder.
+2. Run the following command:
+
+```bash
+python image_processing_gui.py
+```
+
+This will launch the desktop application for image loading and cropping using a graphical interface.
+
