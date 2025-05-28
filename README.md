@@ -70,4 +70,6 @@ This desktop application shows GUI for image processing. It includes the followi
    ```bash
    python image_processing_gui.py
    ```
-
+4. Run the command:
+   ```bash
+   python side_scrolling_game.py
