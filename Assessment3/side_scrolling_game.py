@@ -1,194 +1,270 @@
-#import pygame to create 2d game
+# import pygame to create 2d game
 import pygame
-import os
 import random
 
-# Initialize Pygame
+# initialize Pygame
 pygame.init()
-
-# Constants
+# screen width and height
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
-FPS = 60
+FPS = 30
 
-# Colors
+# different colors to be used in the game
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 
+# Player Class
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.Surface([40, 60])
-        self.image.fill(BLUE)
+        self.image = pygame.image.load("shooting-game.png").convert_alpha()  # Load the image
+        self.image = pygame.transform.scale(self.image, (100, 100))     # Resize image
         self.rect = self.image.get_rect()
-        
-        # Position
         self.rect.x = 100
         self.rect.y = SCREEN_HEIGHT - 100
-        
-        # Movement
+
         self.speed_x = 0
         self.speed_y = 0
         self.jump_speed = -15
-        self.move_speed = 5
-        
-        # Physics
         self.gravity = 0.8
         self.is_jumping = False
-        
-        # Stats
+
         self.health = 100
         self.lives = 3
+        self.move_speed = 5
         self.score = 0
 
-    def update(self):
-        # Apply gravity
-        self.speed_y += self.gravity
-        
-        # Update position
-        self.rect.x += self.speed_x
-        self.rect.y += self.speed_y
-        
-        # Keep player on screen
-        if self.rect.bottom > SCREEN_HEIGHT:
-            self.rect.bottom = SCREEN_HEIGHT
-            self.speed_y = 0
-            self.is_jumping = False
-        
-        if self.rect.left < 0:
-            self.rect.left = 0
-        if self.rect.right > SCREEN_WIDTH:
-            self.rect.right = SCREEN_WIDTH
+    def move(self, direction):
+        if direction == "left":
+            self.speed_x = -self.move_speed
+        elif direction == "right":
+            self.speed_x = self.move_speed
+        else:
+            self.speed_x = 0
+
+    def set_speed(self, speed):
+        self.move_speed = speed
 
     def jump(self):
         if not self.is_jumping:
             self.speed_y = self.jump_speed
             self.is_jumping = True
 
-    def move_left(self):
-        self.speed_x = -self.move_speed
+    def take_damage(self, amount):
+        self.health -= amount
+        if self.health <= 0:
+            self.health = 100
+            self.lose_life()
 
-    def move_right(self):
-        self.speed_x = self.move_speed
+    def lose_life(self):
+        self.lives -= 1
 
-    def stop(self):
-        self.speed_x = 0
+    def update(self):
+        self.speed_y += self.gravity
+        self.rect.x += self.speed_x
+        self.rect.y += self.speed_y
 
-    def shoot(self):
-        projectile = Projectile(self.rect.centerx, self.rect.centery)
-        return projectile
+        if self.rect.bottom > SCREEN_HEIGHT:
+            self.rect.bottom = SCREEN_HEIGHT
+            self.speed_y = 0
+            self.is_jumping = False
 
+        if self.rect.left < 0:
+            self.rect.left = 0
+        if self.rect.right > SCREEN_WIDTH:
+            self.rect.right = SCREEN_WIDTH
+
+# Projectile Class
 class Projectile(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
         self.image = pygame.Surface([10, 5])
         self.image.fill(RED)
         self.rect = self.image.get_rect()
-        
-        # Position
         self.rect.x = x
         self.rect.y = y
-        
-        # Movement
         self.speed = 10
         self.damage = 25
 
     def update(self):
         self.rect.x += self.speed
-        
-        # Remove if off screen
         if self.rect.right > SCREEN_WIDTH:
             self.kill()
 
+# Enemy Class
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, x, y, health=50):
+        super().__init__()
+        self.image = pygame.Surface([40, 40])
+        self.image.fill(RED)
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.speed = 2
+        self.direction = 1
+        self.health = health
+
+    def update(self):
+        self.rect.x += self.speed * self.direction
+        if self.rect.left < 0 or self.rect.right > SCREEN_WIDTH:
+            self.direction *= -1
+
+    def take_damage(self, amount):
+        self.health -= amount
+        if self.health <= 0:
+            self.kill()
+
+# Collectible Class
+class Collectible(pygame.sprite.Sprite):
+    def __init__(self, x, y, kind):
+        super().__init__()
+        self.image = pygame.Surface([20, 20])
+        self.image.fill(GREEN if kind == 'health' else WHITE)
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.kind = kind
+
+    def apply_to_player(self, player):
+        if self.kind == 'health':
+            player.health = min(100, player.health + 25)
+        elif self.kind == 'life':
+            player.lives += 1
+        player.score += 5
+        self.kill()
+
+# Game Class
 class Game:
     def __init__(self):
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption("Side Scrolling Game")
         self.clock = pygame.time.Clock()
         self.running = True
-        
-        # Sprite groups
+        self.level = 1
+
         self.all_sprites = pygame.sprite.Group()
         self.projectiles = pygame.sprite.Group()
-        
-        # Create player
+        self.enemies = pygame.sprite.Group()
+        self.collectibles = pygame.sprite.Group()
+
         self.player = Player()
         self.all_sprites.add(self.player)
 
-        self.enemies = pygame.sprite.Group()
+        self.spawn_level()
 
-        # enemy
-        enemy = Enemy(400, SCREEN_HEIGHT - 80)
-        self.all_sprites.add(enemy)
-        self.enemies.add(enemy)
+    def spawn_level(self):
+        self.enemies.empty()
+        self.collectibles.empty()
+        if self.level == 3:
+            boss = Enemy(600, SCREEN_HEIGHT - 80, health=150)
+            self.enemies.add(boss)
+            self.all_sprites.add(boss)
+        else:
+            for i in range(3 * self.level):
+                enemy = Enemy(random.randint(400, 700), SCREEN_HEIGHT - 80)
+                self.enemies.add(enemy)
+                self.all_sprites.add(enemy)
 
+        for i in range(2):
+            kind = random.choice(['health', 'life'])
+            item = Collectible(random.randint(200, 700), SCREEN_HEIGHT - 100, kind)
+            self.collectibles.add(item)
+            self.all_sprites.add(item)
 
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-            
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     self.player.jump()
                 if event.key == pygame.K_f:
-                    projectile = self.player.shoot()
-                    self.all_sprites.add(projectile)
-                    self.projectiles.add(projectile)
+                    proj = Projectile(self.player.rect.centerx, self.player.rect.centery)
+                    self.projectiles.add(proj)
+                    self.all_sprites.add(proj)
 
-        # Continuous movement
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
-            self.player.move_left()
+            self.player.move("left")
         elif keys[pygame.K_RIGHT]:
-            self.player.move_right()
+            self.player.move("right")
         else:
-            self.player.stop()
+            self.player.move("stop")
 
-    def update(self):
-        self.all_sprites.update()
-        # Update all sprites
-        self.all_sprites.update()
-
-        # Check for projectile–enemy collisions
-        for projectile in self.projectiles:
-            enemy_hits = pygame.sprite.spritecollide(projectile, self.enemies, False)
-            for enemy in enemy_hits:
-                enemy.take_damage(projectile.damage)
-                projectile.kill()
-                self.player.score += 10  # Reward
-
-
-    # Draw Health Bar
     def draw_health_bar(self, surface, x, y, health, max_health):
         BAR_WIDTH = 200
         BAR_HEIGHT = 20
         fill = (health / max_health) * BAR_WIDTH
         outline_rect = pygame.Rect(x, y, BAR_WIDTH, BAR_HEIGHT)
         fill_rect = pygame.Rect(x, y, fill, BAR_HEIGHT)
+        pygame.draw.rect(surface, RED, outline_rect)
+        pygame.draw.rect(surface, GREEN, fill_rect)
+        pygame.draw.rect(surface, WHITE, outline_rect, 2)
 
-        pygame.draw.rect(surface, RED, outline_rect)   # Background (red)
-        pygame.draw.rect(surface, GREEN, fill_rect)    # Current health (green)
-        pygame.draw.rect(surface, WHITE, outline_rect, 2)  # Border
+    def update(self):
+        self.all_sprites.update()
 
-    # Inside your Game.draw() method
+        for proj in self.projectiles:
+            hits = pygame.sprite.spritecollide(proj, self.enemies, False)
+            for enemy in hits:
+                enemy.take_damage(proj.damage)
+                proj.kill()
+                self.player.score += 10
+
+        collectible_hits = pygame.sprite.spritecollide(self.player, self.collectibles, False)
+        for item in collectible_hits:
+            item.apply_to_player(self.player)
+
+        if not self.enemies:
+            self.level += 1
+            if self.level > 3:
+                self.running = False
+            else:
+                self.spawn_level()
+
+        if self.player.lives <= 0:
+            self.running = False
+
     def draw(self):
         self.screen.fill(BLACK)
         self.all_sprites.draw(self.screen)
-
-        # Draw health bar
         self.draw_health_bar(self.screen, 10, 10, self.player.health, 100)
-
-        # Optional: Draw score
         font = pygame.font.SysFont(None, 36)
         score_text = font.render(f"Score: {self.player.score}", True, WHITE)
+        lives_text = font.render(f"Lives: {self.player.lives}", True, WHITE)
+        level_text = font.render(f"Level: {self.level}", True, WHITE)
         self.screen.blit(score_text, (10, 40))
-
+        self.screen.blit(lives_text, (10, 70))
+        self.screen.blit(level_text, (10, 100))
         pygame.display.flip()
 
+    def game_over_screen(self):
+        self.screen.fill(BLACK)
+        font = pygame.font.SysFont(None, 72)
+        text = font.render("Game Over", True, RED)
+        self.screen.blit(text, (SCREEN_WIDTH//2 - 150, SCREEN_HEIGHT//2 - 100))
+        font_small = pygame.font.SysFont(None, 36)
+        restart_text = font_small.render("Press R to Restart or Q to Quit", True, WHITE)
+        self.screen.blit(restart_text, (SCREEN_WIDTH//2 - 180, SCREEN_HEIGHT//2))
+        pygame.display.flip()
+
+        waiting = True
+        while waiting:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    waiting = False
+                    self.running = False
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_r:
+                        self.__init__()
+                        self.run()
+                        waiting = False
+                    if event.key == pygame.K_q:
+                        waiting = False
+                        self.running = False
 
     def run(self):
         while self.running:
@@ -196,31 +272,7 @@ class Game:
             self.handle_events()
             self.update()
             self.draw()
-
-class Enemy(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        super().__init__()
-        self.image = pygame.Surface([40, 40])
-        self.image.fill(RED)
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
-
-        self.speed = 2
-        self.direction = 1
-        self.health = 50
-
-    def update(self):
-        # Move back and forth
-        self.rect.x += self.speed * self.direction
-        if self.rect.left < 0 or self.rect.right > SCREEN_WIDTH:
-            self.direction *= -1
-
-    def take_damage(self, amount):
-        self.health -= amount  
-        if self.health <= 0:
-            self.kill()
-
+        self.game_over_screen()
 
 if __name__ == "__main__":
     game = Game()
