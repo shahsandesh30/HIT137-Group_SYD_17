@@ -1,3 +1,4 @@
+#import pygame to create 2d game
 import pygame
 import os
 import random
