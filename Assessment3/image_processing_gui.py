@@ -203,15 +203,20 @@ class ImageProcessingApp:
             self.resizer.update_display(self.current_cropped, int(value))
 
     def save_image(self):
+        """Resize the cropped image based on the slider and save it."""
         if self.current_cropped:
             scale = int(self.resize_slider.get())
+
+            # Calculate new dimensions
             width = int(self.current_cropped.width * scale / 100)
             height = int(self.current_cropped.height * scale / 100)
-            resized = self.current_cropped.resize(
-                (width, height), 
-                Image.Resampling.LANCZOS
-            )
+
+            # Resize the image with high-quality resampling
+            resized = self.current_cropped.resize((width, height), Image.Resampling.LANCZOS)
+
+            # Save the resized image
             self.saver.save_image(resized)
+
     def reset_canvases(self):
         """Clear both canvases and reset the slider."""
         self.canvas.delete("all")
