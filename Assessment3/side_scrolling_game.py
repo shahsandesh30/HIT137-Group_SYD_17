@@ -5,26 +5,27 @@ import os
 
 # initialize Pygame
 pygame.init()
+
 # screen width and height
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 FPS = 30
 
-# different colors to be used in the game
+# different colors to be used within the game
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 
-# Get the directory of the current script
+# Get the directory of the current script to run the program
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Player Class
+# defining player class
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        # Construct the path to the image dynamically
+        # dynamic path to image
         image_path = os.path.join(BASE_DIR, "assets", "player.png")
         self.original_image = pygame.image.load(image_path).convert_alpha()  # Keep the original image
         self.image = pygame.transform.scale(self.original_image, (80, 100))
@@ -90,17 +91,17 @@ class Player(pygame.sprite.Sprite):
         if self.rect.right > SCREEN_WIDTH:
             self.rect.right = SCREEN_WIDTH
 
-# Projectile Class
+# define projectile class
 class Projectile(pygame.sprite.Sprite):
     def __init__(self, x, y, direction="right"):
         super().__init__()
 
-        # Create the bullet surface and color it red
+        # bullet surface with colour red
         self.image = pygame.Surface((10, 5))
         self.image.fill(RED)
         self.rect = self.image.get_rect()
 
-        # Set bullet's starting position based on direction
+        # bullet starting position
         offset = 30 if direction == "right" else -30
         self.rect.x = x + offset
         self.rect.y = y + 5  # Slight vertical adjustment to align with the gun
@@ -115,7 +116,7 @@ class Projectile(pygame.sprite.Sprite):
         if self.rect.right < 0 or self.rect.left > SCREEN_WIDTH:
             self.kill()
 
-# Enemy Class
+# define enemy class
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, x, y, health, enemy_type):
         super().__init__()
