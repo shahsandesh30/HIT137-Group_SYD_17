@@ -1,6 +1,7 @@
 # import pygame to create 2d game
 import pygame
 import random
+import os
 
 # initialize Pygame
 pygame.init()
@@ -16,12 +17,17 @@ RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 
+# Get the directory of the current script
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # Player Class
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.image.load("shooting-game.png").convert_alpha()  # Load the image
-        self.image = pygame.transform.scale(self.image, (100, 100))     # Resize image
+        # Construct the path to the image dynamically
+        image_path = os.path.join(BASE_DIR, "assets", "player.png")
+        self.original_image = pygame.image.load(image_path).convert_alpha()  # Keep the original image
+        self.image = pygame.transform.scale(self.original_image, (80, 100))
         self.rect = self.image.get_rect()
         self.rect.x = 100
         self.rect.y = SCREEN_HEIGHT - 100
@@ -31,6 +37,7 @@ class Player(pygame.sprite.Sprite):
         self.jump_speed = -15
         self.gravity = 0.8
         self.is_jumping = False
+        self.last_direction = "right"
 
         self.health = 100
         self.lives = 3
@@ -40,8 +47,14 @@ class Player(pygame.sprite.Sprite):
     def move(self, direction):
         if direction == "left":
             self.speed_x = -self.move_speed
+            self.last_direction = "left"
+            self.image = pygame.transform.flip(
+                pygame.transform.scale(self.original_image, (80, 100)), True, False
+            )  # Flip horizontally
         elif direction == "right":
             self.speed_x = self.move_speed
+            self.last_direction = "right"
+            self.image = pygame.transform.scale(self.original_image, (80, 100))  # Reset to original
         else:
             self.speed_x = 0
 
@@ -79,30 +92,56 @@ class Player(pygame.sprite.Sprite):
 
 # Projectile Class
 class Projectile(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x, y, direction="right"):
         super().__init__()
         self.image = pygame.Surface([10, 5])
         self.image.fill(RED)
         self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
-        self.speed = 10
+
+        # Adjust the starting position of the bullet
+        if direction == "right":
+            self.rect.x = x + 30  # Offset to match the gunpoint (right side of the player)
+        else:  # direction == "left"
+            self.rect.x = x - 30  # Offset to match the gunpoint (left side of the player)
+
+        self.rect.y = y + 5  # Adjust vertically to align with the gunpoint
+        self.speed = 10 if direction == "right" else -10
         self.damage = 25
 
     def update(self):
         self.rect.x += self.speed
-        if self.rect.right > SCREEN_WIDTH:
+        if self.rect.right < 0 or self.rect.left > SCREEN_WIDTH:
             self.kill()
 
 # Enemy Class
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, x, y, health=50):
+    def __init__(self, x, y, health, enemy_type):
         super().__init__()
-        self.image = pygame.Surface([40, 40])
-        self.image.fill(RED)
+        # Load enemy image based on type
+        image_path = os.path.join(BASE_DIR, "assets", f"{enemy_type}.png")
+        original_image = pygame.image.load(image_path).convert_alpha()
+
+        # Get original dimensions
+        original_width, original_height = original_image.get_size()
+
+        # Desired dimensions
+        max_width, max_height = 80, 100
+
+        # Calculate scaling factor to maintain aspect ratio
+        scale_factor = min(max_width / original_width, max_height / original_height)
+
+        # Calculate new dimensions
+        new_width = int(original_width * scale_factor)
+        new_height = int(original_height * scale_factor)
+
+        # Scale the image proportionally
+        self.image = pygame.transform.scale(original_image, (new_width, new_height))
         self.rect = self.image.get_rect()
+
+        # Adjust position to ensure the enemy is fully visible
         self.rect.x = x
-        self.rect.y = y
+        self.rect.y = SCREEN_HEIGHT - new_height + 5  # Lower the enemy by increasing the offset
+
         self.speed = 2
         self.direction = 1
         self.health = health
@@ -117,12 +156,19 @@ class Enemy(pygame.sprite.Sprite):
         if self.health <= 0:
             self.kill()
 
-# Collectible Class
+
 class Collectible(pygame.sprite.Sprite):
     def __init__(self, x, y, kind):
         super().__init__()
-        self.image = pygame.Surface([20, 20])
-        self.image.fill(GREEN if kind == 'health' else WHITE)
+        # Load collectible image based on type
+        if kind == 'health':
+            image_path = os.path.join(BASE_DIR, "assets", "apple.png")
+        elif kind == 'life':
+            image_path = os.path.join(BASE_DIR, "assets", "health.png")
+        else:  # score
+            image_path = os.path.join(BASE_DIR, "assets", "berry.png")
+        self.image = pygame.image.load(image_path).convert_alpha()
+        self.image = pygame.transform.scale(self.image, (30, 30))
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -136,7 +182,7 @@ class Collectible(pygame.sprite.Sprite):
         player.score += 5
         self.kill()
 
-# Game Class
+
 class Game:
     def __init__(self):
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -155,19 +201,41 @@ class Game:
 
         self.spawn_level()
 
+    def level_start_screen(self):
+        """Display the level number at the start of each level."""
+        self.screen.fill(BLACK)
+        font = pygame.font.SysFont(None, 72)
+        text = font.render(f"Level {self.level}", True, WHITE)
+        self.screen.blit(text, (SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 - 50))
+        pygame.display.flip()
+
+        # Pause for a moment to display the level
+        pygame.time.delay(2000)  # 2000 milliseconds = 2 seconds
+
     def spawn_level(self):
+        """Spawn enemies and collectibles for the current level."""
         self.enemies.empty()
         self.collectibles.empty()
-        if self.level == 3:
-            boss = Enemy(600, SCREEN_HEIGHT - 80, health=150)
-            self.enemies.add(boss)
-            self.all_sprites.add(boss)
-        else:
-            for i in range(3 * self.level):
-                enemy = Enemy(random.randint(400, 700), SCREEN_HEIGHT - 80)
-                self.enemies.add(enemy)
-                self.all_sprites.add(enemy)
 
+        # Start a timer to display the level number briefly
+        self.level_start_timer = 60  # Display for 60 frames (1 second at 60 FPS)
+
+        # Enemy types and health scaling
+        enemy_types = {1: "enemy1", 2: "enemy2", 3: "enemy3"}
+        enemy_health = {1: 50, 2: 100, 3: 150}
+
+        # Spawn enemies
+        for i in range(3 * self.level):
+            enemy = Enemy(
+                random.randint(400, 700),
+                SCREEN_HEIGHT - 80,
+                health=enemy_health[self.level],
+                enemy_type=enemy_types[self.level]
+            )
+            self.enemies.add(enemy)
+            self.all_sprites.add(enemy)
+
+        # Spawn collectibles
         for i in range(2):
             kind = random.choice(['health', 'life'])
             item = Collectible(random.randint(200, 700), SCREEN_HEIGHT - 100, kind)
@@ -179,10 +247,10 @@ class Game:
             if event.type == pygame.QUIT:
                 self.running = False
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
+                if event.key == pygame.K_UP:  # Change from SPACEBAR to UP ARROW
                     self.player.jump()
                 if event.key == pygame.K_f:
-                    proj = Projectile(self.player.rect.centerx, self.player.rect.centery)
+                    proj = Projectile(self.player.rect.centerx, self.player.rect.centery, self.player.last_direction)
                     self.projectiles.add(proj)
                     self.all_sprites.add(proj)
 
@@ -205,8 +273,14 @@ class Game:
         pygame.draw.rect(surface, WHITE, outline_rect, 2)
 
     def update(self):
+        """Update all game elements."""
         self.all_sprites.update()
 
+        # Decrease the level start timer
+        if self.level_start_timer > 0:
+            self.level_start_timer -= 1
+
+        # Handle collisions
         for proj in self.projectiles:
             hits = pygame.sprite.spritecollide(proj, self.enemies, False)
             for enemy in hits:
@@ -218,33 +292,76 @@ class Game:
         for item in collectible_hits:
             item.apply_to_player(self.player)
 
+        enemy_hits = pygame.sprite.spritecollide(self.player, self.enemies, False)
+        for enemy in enemy_hits:
+            self.player.take_damage(10)
+
+        # Check if all enemies are defeated
         if not self.enemies:
             self.level += 1
             if self.level > 3:
-                self.running = False
+                self.you_win_screen()
+                return
             else:
                 self.spawn_level()
 
+        # Check if the player is out of lives
         if self.player.lives <= 0:
             self.running = False
 
     def draw(self):
+        """Draw all game elements, including the level number."""
         self.screen.fill(BLACK)
         self.all_sprites.draw(self.screen)
         self.draw_health_bar(self.screen, 10, 10, self.player.health, 100)
+
+        # Display score, lives, and level
         font = pygame.font.SysFont(None, 36)
         score_text = font.render(f"Score: {self.player.score}", True, WHITE)
         lives_text = font.render(f"Lives: {self.player.lives}", True, WHITE)
         level_text = font.render(f"Level: {self.level}", True, WHITE)
+
         self.screen.blit(score_text, (10, 40))
         self.screen.blit(lives_text, (10, 70))
-        self.screen.blit(level_text, (10, 100))
+        self.screen.blit(level_text, (10, 100))  # Display level number at the top-left corner
+
+        # Optionally, display the level number in the center of the screen
+        if self.level_start_timer > 0:
+            level_font = pygame.font.SysFont(None, 72)
+            level_center_text = level_font.render(f"Level {self.level}", True, WHITE)
+            self.screen.blit(level_center_text, (SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 - 50))
+
         pygame.display.flip()
 
     def game_over_screen(self):
         self.screen.fill(BLACK)
         font = pygame.font.SysFont(None, 72)
         text = font.render("Game Over", True, RED)
+        self.screen.blit(text, (SCREEN_WIDTH//2 - 150, SCREEN_HEIGHT//2 - 100))
+        font_small = pygame.font.SysFont(None, 36)
+        restart_text = font_small.render("Press R to Restart or Q to Quit", True, WHITE)
+        self.screen.blit(restart_text, (SCREEN_WIDTH//2 - 180, SCREEN_HEIGHT//2))
+        pygame.display.flip()
+
+        waiting = True
+        while waiting:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    waiting = False
+                    self.running = False
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_r:
+                        self.__init__()
+                        self.run()
+                        waiting = False
+                    if event.key == pygame.K_q:
+                        waiting = False
+                        self.running = False
+
+    def you_win_screen(self):
+        self.screen.fill(BLACK)
+        font = pygame.font.SysFont(None, 72)
+        text = font.render("You Win!", True, GREEN)
         self.screen.blit(text, (SCREEN_WIDTH//2 - 150, SCREEN_HEIGHT//2 - 100))
         font_small = pygame.font.SysFont(None, 36)
         restart_text = font_small.render("Press R to Restart or Q to Quit", True, WHITE)
@@ -273,6 +390,7 @@ class Game:
             self.update()
             self.draw()
         self.game_over_screen()
+
 
 if __name__ == "__main__":
     game = Game()
