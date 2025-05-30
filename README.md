@@ -43,7 +43,7 @@ This desktop application shows GUI for image processing. It includes the followi
 
 1. **Image Loading**
    - Select and load images from your local device
-   - Supports common image formats (jpg, jpeg, png, bmp, gif)
+   - Supports common image formats
    - Displays the loaded image in the application window
 
 2. **Image Cropping**
@@ -55,9 +55,14 @@ This desktop application shows GUI for image processing. It includes the followi
    - Real-time preview as you adjust the size
 
 4. **Save Functionality**
-   - Save the modified image in PNG or JPEG format
+   - Save the modified image
    - Preserves the current crop and resize settings
 
+5. **Undo and Redo**
+   - Undo the last crop action
+   - Redo the undone crop action
+
+![Image Processing Sample](images/image_processing_sample.png)
 
 #### To Run the Application
 
@@ -70,6 +75,36 @@ This desktop application shows GUI for image processing. It includes the followi
    ```bash
    python image_processing_gui.py
    ```
-4. Run the command:
+
+### 2. Side Scrolling Game (Question 2)
+
+This is a side-scrolling game where the player navigates through levels, avoiding or defeating enemies, and collecting items.
+
+#### How to Play
+
+- **Objective**: Survive through levels by avoiding or defeating enemies and collecting items to increase your score and lives.
+- **Controls**:
+  - **Move Left/Right**: Use the arrow keys to move the player left or right.
+  - **Jump**: Press the 'Up' arrow key to jump.
+  - **Shoot**: Press 'F' to shoot projectiles at enemies.
+- **Game Progression**:
+  - The game consists of multiple levels, each with increasing difficulty.
+  - Defeat all enemies in a level to progress to the next.
+  - Collectibles like health and extra lives can be found throughout the levels.
+- **Winning and Losing**:
+  - Win by completing all levels.
+  - Lose if you run out of lives.
+
+![2D Game Sample](images/2d_game_sample.png)
+
+#### To Run the Game
+
+1. Open the terminal in the "Assessment3" folder.
+2. Install the required packages if haven't
+    ```bash
+    pip install -r requirements.txt
+    ```
+3. Run the command:
    ```bash
    python side_scrolling_game.py
+   ```
