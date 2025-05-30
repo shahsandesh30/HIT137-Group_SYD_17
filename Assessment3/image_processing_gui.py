@@ -81,21 +81,21 @@ class ImageResizer:
         self.cropped_tk_image = None
 
     def update_display(self, image, scale_percent):
-        #to resize and display the image in the screen 
+        #resize and display image
         if not image:
             return None
         
-        # Calculating new dimensions by scaling
+        # calculate new dimensions based on scale percentage
         new_width = max(1, int(image.width * scale_percent / 100))
         new_height = max(1, int(image.height * scale_percent / 100))
 
-        # To resize the image using high-quality resampling
+        # resize the image
         resized_image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
 
-        # To aConvert to Tkinter-compatible image
+        # convert to PhotoImage for display
         self.cropped_tk_image = ImageTk.PhotoImage(resized_image)
 
-        # Clear the canvas and display the resized image
+        # clear the cropped canvas and display the resized image
         self.cropped_canvas.delete("all")
         self.cropped_canvas.create_image(
             0, 0, anchor=tk.NW, image=self.cropped_tk_image
@@ -123,24 +123,24 @@ class ImageProcessingApp:
         self.master = master
         self.master.title("Image Processing GUI")
 
-        # Create canvases
+        # Create main canvas and cropped canvas
         self.canvas = tk.Canvas(master, width=400, height=300, cursor="cross")
         self.canvas.pack(side=tk.LEFT)
 
         self.cropped_canvas = tk.Canvas(master, width=400, height=300)
         self.cropped_canvas.pack(side=tk.RIGHT)
 
-        # Initialize feature classes
+        # Initialize components/canvases
         self.loader = ImageLoader(self.canvas)
         self.cropper = ImageCropper(self.canvas, self.cropped_canvas)
         self.resizer = ImageResizer(self.cropped_canvas)
         self.saver = ImageSaver()
 
-        # Create control frame
+        # Create control frame for buttons and slider
         self.control_frame = tk.Frame(master)
         self.control_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=5, pady=5)
         
-        # Add buttons
+        #   Add buttons for loading,saving and resetting images
         self.load_button = tk.Button(
             self.control_frame, 
             text="Load Image", 
@@ -160,7 +160,7 @@ class ImageProcessingApp:
         )
         self.reset_button.pack(side=tk.LEFT, padx=5)
 
-        # Add resize slider
+        # Add slider for resizing cropped images
         self.resize_slider = tk.Scale(
             self.control_frame, 
             from_=10, to=200,
@@ -171,12 +171,12 @@ class ImageProcessingApp:
         self.resize_slider.set(100)
         self.resize_slider.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
 
-        # Bind mouse events
+        # Binding mouse events for cropping
         self.canvas.bind("<ButtonPress-1>", self.cropper.on_mouse_down)
         self.canvas.bind("<B1-Motion>", self.cropper.on_mouse_drag)
         self.canvas.bind("<ButtonRelease-1>", self.on_mouse_up)
 
-        # Store current cropped image
+        # Initialize current cropped image
         self.current_cropped = None
 
     def load_image(self):
