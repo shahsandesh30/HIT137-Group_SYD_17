@@ -94,19 +94,21 @@ class Player(pygame.sprite.Sprite):
 class Projectile(pygame.sprite.Sprite):
     def __init__(self, x, y, direction="right"):
         super().__init__()
-        self.image = pygame.Surface([10, 5])
+
+        # Create the bullet surface and color it red
+        self.image = pygame.Surface((10, 5))
         self.image.fill(RED)
         self.rect = self.image.get_rect()
 
-        # Adjust the starting position of the bullet
-        if direction == "right":
-            self.rect.x = x + 30  # Offset to match the gunpoint (right side of the player)
-        else:  # direction == "left"
-            self.rect.x = x - 30  # Offset to match the gunpoint (left side of the player)
+        # Set bullet's starting position based on direction
+        offset = 30 if direction == "right" else -30
+        self.rect.x = x + offset
+        self.rect.y = y + 5  # Slight vertical adjustment to align with the gun
 
-        self.rect.y = y + 5  # Adjust vertically to align with the gunpoint
+        # Set movement speed and damage
         self.speed = 10 if direction == "right" else -10
         self.damage = 25
+
 
     def update(self):
         self.rect.x += self.speed
