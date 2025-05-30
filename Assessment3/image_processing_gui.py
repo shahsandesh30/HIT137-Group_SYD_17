@@ -63,17 +63,26 @@ class ImageCropper:
         return self.crop_image(cv_image)
 
     def crop_image(self, cv_image):
-        if cv_image is not None:
-            x1, y1 = min(self.start_x, self.end_x), min(self.start_y, self.end_y)
-            x2, y2 = max(self.start_x, self.end_x), max(self.start_y, self.end_y)
-            cropped_cv = cv_image[y1:y2, x1:x2]
-            if cropped_cv.size == 0:
-                return None
-            
-            cropped_rgb = cv2.cvtColor(cropped_cv, cv2.COLOR_BGR2RGB)
-            self.cropped_image = Image.fromarray(cropped_rgb)
-            return self.cropped_image
-        return None
+        """Crop the selected area from the given OpenCV image."""
+        if cv_image is None:
+            return None
+
+        # Determine bounding box coordinates
+        x1, y1 = sorted((self.start_x, self.end_x))
+        x2, y2 = sorted((self.start_y, self.end_y))
+
+        # Crop the image using NumPy slicing
+        cropped_cv = cv_image[y1:y2, x1:x2]
+
+        # Handle empty crop result
+        if cropped_cv.size == 0:
+            return None
+
+        # Convert BGR (OpenCV) to RGB (Pillow) and return PIL Image
+        cropped_rgb = cv2.cvtColor(cropped_cv, cv2.COLOR_BGR2RGB)
+        self.cropped_image = Image.fromarray(cropped_rgb)
+        return self.cropped_image
+
 
 class ImageResizer:
     def __init__(self, cropped_canvas):
