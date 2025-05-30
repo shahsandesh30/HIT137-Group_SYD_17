@@ -204,15 +204,19 @@ class Game:
         self.spawn_level()
 
     def level_start_screen(self):
-        """Display the level number at the start of each level."""
+        """Show the current level number before the level begins."""
         self.screen.fill(BLACK)
+
+        # Create and render the level text
         font = pygame.font.SysFont(None, 72)
         text = font.render(f"Level {self.level}", True, WHITE)
         self.screen.blit(text, (SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 - 50))
+
         pygame.display.flip()
 
-        # Pause for a moment to display the level
-        pygame.time.delay(2000)  # 2000 milliseconds = 2 seconds
+        # Wait 2 seconds before starting the level
+        pygame.time.delay(2000)
+
 
     def spawn_level(self):
         """Spawn enemies and collectibles for the current level."""
