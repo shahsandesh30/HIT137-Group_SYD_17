@@ -95,7 +95,7 @@ class Player(pygame.sprite.Sprite):
         self.rect.left = max(0, self.rect.left)
         self.rect.right = min(SCREEN_WIDTH, self.rect.right)
 
-#projectile class
+#projectile classa
 class Projectile(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
@@ -155,6 +155,9 @@ class Collectible(pygame.sprite.Sprite):
         self.kill()
 
 # Game Class
+import pygame
+import random
+
 class Game:
     def __init__(self):
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -163,46 +166,50 @@ class Game:
         self.running = True
         self.level = 1
 
+        # Sprite groups
         self.all_sprites = pygame.sprite.Group()
         self.projectiles = pygame.sprite.Group()
         self.enemies = pygame.sprite.Group()
         self.collectibles = pygame.sprite.Group()
 
+        # Player setup
         self.player = Player()
         self.all_sprites.add(self.player)
 
+        # Initial level spawn
         self.spawn_level()
 
     def spawn_level(self):
+        """Set up enemies and collectibles for the current level."""
         self.enemies.empty()
         self.collectibles.empty()
+
         if self.level == 3:
             boss = Enemy(600, SCREEN_HEIGHT - 80, health=150)
             self.enemies.add(boss)
             self.all_sprites.add(boss)
         else:
-            for i in range(3 * self.level):
+            for _ in range(3 * self.level):
                 enemy = Enemy(random.randint(400, 700), SCREEN_HEIGHT - 80)
                 self.enemies.add(enemy)
                 self.all_sprites.add(enemy)
 
-        for i in range(2):
+        for _ in range(2):
             kind = random.choice(['health', 'life'])
             item = Collectible(random.randint(200, 700), SCREEN_HEIGHT - 100, kind)
             self.collectibles.add(item)
             self.all_sprites.add(item)
 
     def handle_events(self):
+        """Handle user input events."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-            if event.type == pygame.KEYDOWN:
+            elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     self.player.jump()
-                if event.key == pygame.K_f:
-                    proj = Projectile(self.player.rect.centerx, self.player.rect.centery)
-                    self.projectiles.add(proj)
-                    self.all_sprites.add(proj)
+                elif event.key == pygame.K_f:
+                    self.fire_projectile()
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
@@ -212,7 +219,14 @@ class Game:
         else:
             self.player.move("stop")
 
+    def fire_projectile(self):
+        """Create and fire a projectile from the player."""
+        proj = Projectile(self.player.rect.centerx, self.player.rect.centery)
+        self.projectiles.add(proj)
+        self.all_sprites.add(proj)
+
     def draw_health_bar(self, surface, x, y, health, max_health):
+        """Draw the health bar."""
         BAR_WIDTH = 200
         BAR_HEIGHT = 20
         fill = (health / max_health) * BAR_WIDTH
@@ -223,8 +237,10 @@ class Game:
         pygame.draw.rect(surface, WHITE, outline_rect, 2)
 
     def update(self):
+        """Update all game elements and check for collisions."""
         self.all_sprites.update()
 
+        # Projectile-enemy collisions
         for proj in self.projectiles:
             hits = pygame.sprite.spritecollide(proj, self.enemies, False)
             for enemy in hits:
@@ -232,10 +248,12 @@ class Game:
                 proj.kill()
                 self.player.score += 10
 
-        collectible_hits = pygame.sprite.spritecollide(self.player, self.collectibles, False)
+        # Player-collectible collisions
+        collectible_hits = pygame.sprite.spritecollide(self.player, self.collectibles, True)
         for item in collectible_hits:
             item.apply_to_player(self.player)
 
+        # Advance level if enemies cleared
         if not self.enemies:
             self.level += 1
             if self.level > 3:
@@ -243,54 +261,61 @@ class Game:
             else:
                 self.spawn_level()
 
+        # End game if player dies
         if self.player.lives <= 0:
             self.running = False
 
+    def display_text(self, text, size, x, y, color=WHITE):
+        """Helper to render and display text on screen."""
+        font = pygame.font.SysFont(None, size)
+        rendered_text = font.render(text, True, color)
+        self.screen.blit(rendered_text, (x, y))
+
     def draw(self):
+        """Render all game visuals."""
         self.screen.fill(BLACK)
         self.all_sprites.draw(self.screen)
+
         self.draw_health_bar(self.screen, 10, 10, self.player.health, 100)
-        font = pygame.font.SysFont(None, 36)
-        score_text = font.render(f"Score: {self.player.score}", True, WHITE)
-        lives_text = font.render(f"Lives: {self.player.lives}", True, WHITE)
-        level_text = font.render(f"Level: {self.level}", True, WHITE)
-        self.screen.blit(score_text, (10, 40))
-        self.screen.blit(lives_text, (10, 70))
-        self.screen.blit(level_text, (10, 100))
+
+        # UI Texts
+        self.display_text(f"Score: {self.player.score}", 36, 10, 40)
+        self.display_text(f"Lives: {self.player.lives}", 36, 10, 70)
+        self.display_text(f"Level: {self.level}", 36, 10, 100)
+
         pygame.display.flip()
 
     def game_over_screen(self):
+        """Display the Game Over screen and handle restart/quit."""
         self.screen.fill(BLACK)
-        font = pygame.font.SysFont(None, 72)
-        text = font.render("Game Over", True, RED)
-        self.screen.blit(text, (SCREEN_WIDTH//2 - 150, SCREEN_HEIGHT//2 - 100))
-        font_small = pygame.font.SysFont(None, 36)
-        restart_text = font_small.render("Press R to Restart or Q to Quit", True, WHITE)
-        self.screen.blit(restart_text, (SCREEN_WIDTH//2 - 180, SCREEN_HEIGHT//2))
-        pygame.display.flip()
+        self.display_text("Game Over", 72, SCREEN_WIDTH//2 - 150, SCREEN_HEIGHT//2 - 100, RED)
+        self.display_text("Press R to Restart or Q to Quit", 36, SCREEN_WIDTH//2 - 180, SCREEN_HEIGHT//2)
 
+        pygame.display.flip()
         waiting = True
         while waiting:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     waiting = False
                     self.running = False
-                if event.type == pygame.KEYDOWN:
+                elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_r:
                         self.__init__()
                         self.run()
                         waiting = False
-                    if event.key == pygame.K_q:
+                    elif event.key == pygame.K_q:
                         waiting = False
                         self.running = False
 
     def run(self):
+        """Main game loop."""
         while self.running:
             self.clock.tick(FPS)
             self.handle_events()
             self.update()
             self.draw()
         self.game_over_screen()
+
 
 if __name__ == "__main__":
     game = Game()
