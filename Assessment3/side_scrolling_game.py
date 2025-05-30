@@ -32,7 +32,9 @@ class Player(pygame.sprite.Sprite):
         self.gravity = 0.8
         self.is_jumping = False
 
-        self.health = 100
+        self.health = 0  # start with empty health bar
+        self.max_health = 100
+
         self.lives = 3
         self.move_speed = 5
         self.score = 0
@@ -79,20 +81,33 @@ class Player(pygame.sprite.Sprite):
 
 # Projectile Class
 class Projectile(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x, y, speed=10, damage=25):
         super().__init__()
         self.image = pygame.Surface([10, 5])
         self.image.fill(RED)
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
-        self.speed = 10
-        self.damage = 25
+        self.speed = speed
+        self.damage = damage
 
-    def update(self):
+    def set_speed(self, new_speed):
+        self.speed = new_speed
+
+    def get_speed(self):
+        return self.speed
+
+    def get_damage(self):
+        return self.damage
+
+    def move(self):
         self.rect.x += self.speed
         if self.rect.right > SCREEN_WIDTH:
             self.kill()
+
+    def update(self):
+        self.move()
+
 
 # Enemy Class
 class Enemy(pygame.sprite.Sprite):
@@ -194,15 +209,16 @@ class Game:
         else:
             self.player.move("stop")
 
-    def draw_health_bar(self, surface, x, y, health, max_health):
-        BAR_WIDTH = 200
-        BAR_HEIGHT = 20
-        fill = (health / max_health) * BAR_WIDTH
-        outline_rect = pygame.Rect(x, y, BAR_WIDTH, BAR_HEIGHT)
-        fill_rect = pygame.Rect(x, y, fill, BAR_HEIGHT)
-        pygame.draw.rect(surface, RED, outline_rect)
-        pygame.draw.rect(surface, GREEN, fill_rect)
-        pygame.draw.rect(surface, WHITE, outline_rect, 2)
+    def draw_health_bar(self, surface, x, y, current_health, max_health):
+        bar_width = 100
+        bar_height = 10
+        fill = (current_health / max_health) * bar_width
+        outline_rect = pygame.Rect(x, y, bar_width, bar_height)
+        fill_rect = pygame.Rect(x, y, fill, bar_height)
+        pygame.draw.rect(surface, (0, 255, 0), fill_rect)
+        pygame.draw.rect(surface, (255, 255, 255), outline_rect, 2)
+
+
 
     def update(self):
         self.all_sprites.update()
@@ -210,9 +226,11 @@ class Game:
         for proj in self.projectiles:
             hits = pygame.sprite.spritecollide(proj, self.enemies, False)
             for enemy in hits:
-                enemy.take_damage(proj.damage)
+                enemy.take_damage(proj.get_damage())
                 proj.kill()
+
                 self.player.score += 10
+                self.player.health = min(self.player.max_health, self.player.health + 10)
 
         collectible_hits = pygame.sprite.spritecollide(self.player, self.collectibles, False)
         for item in collectible_hits:
@@ -227,6 +245,7 @@ class Game:
 
         if self.player.lives <= 0:
             self.running = False
+
 
     def draw(self):
         self.screen.fill(BLACK)
