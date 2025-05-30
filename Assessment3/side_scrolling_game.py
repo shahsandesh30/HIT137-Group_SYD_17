@@ -17,67 +17,85 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 
 # Player Class
+import pygame
+
+import pygame
+
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.image.load("shooting-game.png").convert_alpha()  # Load the image
-        self.image = pygame.transform.scale(self.image, (100, 100))     # Resize image
+
+        # Load and scale the player image
+        self.image = pygame.image.load("shooting-game.png").convert_alpha()
+        self.image = pygame.transform.scale(self.image, (100, 100))
+
+        # Set initial position
         self.rect = self.image.get_rect()
         self.rect.x = 100
         self.rect.y = SCREEN_HEIGHT - 100
 
+        # Movement and physics attributes
         self.speed_x = 0
         self.speed_y = 0
+        self.move_speed = 5
         self.jump_speed = -15
         self.gravity = 0.8
         self.is_jumping = False
 
+        # Player status
         self.health = 100
         self.lives = 3
-        self.move_speed = 5
         self.score = 0
 
     def move(self, direction):
-        if direction == "left":
-            self.speed_x = -self.move_speed
-        elif direction == "right":
-            self.speed_x = self.move_speed
-        else:
-            self.speed_x = 0
+        """Move the player left or right based on direction."""
+        directions = {
+            "left": -self.move_speed,
+            "right": self.move_speed
+        }
+        self.speed_x = directions.get(direction, 0)
 
     def set_speed(self, speed):
+        """Update player's horizontal movement speed."""
         self.move_speed = speed
 
     def jump(self):
+        """Make the player jump if not already in the air."""
         if not self.is_jumping:
             self.speed_y = self.jump_speed
             self.is_jumping = True
 
     def take_damage(self, amount):
+        """Reduce player's health and handle life loss."""
         self.health -= amount
         if self.health <= 0:
             self.health = 100
             self.lose_life()
 
     def lose_life(self):
+        """Decrease player's lives by one."""
         self.lives -= 1
 
     def update(self):
+        """Update player's position based on movement and physics."""
+        # Apply gravity
         self.speed_y += self.gravity
+
+        # Update position
         self.rect.x += self.speed_x
         self.rect.y += self.speed_y
 
+        # Floor collision
         if self.rect.bottom > SCREEN_HEIGHT:
             self.rect.bottom = SCREEN_HEIGHT
             self.speed_y = 0
             self.is_jumping = False
 
-        if self.rect.left < 0:
-            self.rect.left = 0
-        if self.rect.right > SCREEN_WIDTH:
-            self.rect.right = SCREEN_WIDTH
+        # Horizontal bounds
+        self.rect.left = max(0, self.rect.left)
+        self.rect.right = min(SCREEN_WIDTH, self.rect.right)
 
-# Projectile Class
+#projectile class
 class Projectile(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
