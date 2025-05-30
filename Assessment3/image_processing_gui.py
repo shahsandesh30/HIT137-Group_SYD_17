@@ -157,6 +157,11 @@ class ImageProcessingApp:
         )
         self.save_button.pack(side=tk.LEFT, padx=5)
         
+        self.reset_button = tk.Button(
+            self.control_frame, text="Reset", command=self.reset_canvases
+        )
+        self.reset_button.pack(side=tk.LEFT, padx=5)
+
         # Add resize slider
         self.resize_slider = tk.Scale(
             self.control_frame, 
@@ -200,7 +205,14 @@ class ImageProcessingApp:
                 Image.Resampling.LANCZOS
             )
             self.saver.save_image(resized)
-
+    def reset_canvases(self):
+        """Clear both canvases and reset the slider."""
+        self.canvas.delete("all")
+        self.cropped_canvas.delete("all")
+        self.resize_slider.set(100)
+        self.current_cropped = None
+    
+   
 if __name__ == "__main__":
     root = tk.Tk()
     app = ImageProcessingApp(root)
