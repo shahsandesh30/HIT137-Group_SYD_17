@@ -279,41 +279,41 @@ class Game:
         pygame.draw.rect(surface, WHITE, outline_rect, 2)
 
     def update(self):
-        """Update all game elements."""
+        """Handle game updates for all elements each frame."""
         self.all_sprites.update()
 
-        # Decrease the level start timer
+        # Countdown delay before level starts
         if self.level_start_timer > 0:
             self.level_start_timer -= 1
 
-        # Handle collisions
-        for proj in self.projectiles:
-            hits = pygame.sprite.spritecollide(proj, self.enemies, False)
+        # Check if any projectile hits an enemy
+        for projectile in self.projectiles:
+            hits = pygame.sprite.spritecollide(projectile, self.enemies, False)
             for enemy in hits:
-                enemy.take_damage(proj.damage)
-                proj.kill()
+                enemy.take_damage(projectile.damage)
+                projectile.kill()
                 self.player.score += 10
 
-        collectible_hits = pygame.sprite.spritecollide(self.player, self.collectibles, False)
-        for item in collectible_hits:
+        # Check if the player touches any collectible
+        for item in pygame.sprite.spritecollide(self.player, self.collectibles, False):
             item.apply_to_player(self.player)
 
-        enemy_hits = pygame.sprite.spritecollide(self.player, self.enemies, False)
-        for enemy in enemy_hits:
+        # Check if the player collides with any enemy
+        for enemy in pygame.sprite.spritecollide(self.player, self.enemies, False):
             self.player.take_damage(10)
 
-        # Check if all enemies are defeated
+        # Move to next level if all enemies are defeated
         if not self.enemies:
             self.level += 1
             if self.level > 3:
                 self.you_win_screen()
                 return
-            else:
-                self.spawn_level()
+            self.spawn_level()
 
-        # Check if the player is out of lives
+        # End the game if the player has no lives left
         if self.player.lives <= 0:
             self.running = False
+
 
     def draw(self):
         """Draw all game elements, including the level number."""
