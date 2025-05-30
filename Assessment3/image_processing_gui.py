@@ -81,29 +81,27 @@ class ImageResizer:
         self.cropped_tk_image = None
 
     def update_display(self, image, scale_percent):
-        if image:
-            # Calculate new dimensions
-            width = int(image.width * scale_percent / 100)
-            height = int(image.height * scale_percent / 100)
-            
-            # Ensure minimum size
-            width = max(1, width)
-            height = max(1, height)
-            
-            # Resize image
-            resized = image.resize((width, height), Image.Resampling.LANCZOS)
-            
-            # Update display
-            self.cropped_tk_image = ImageTk.PhotoImage(resized)
-            self.cropped_canvas.delete("all")
-            self.cropped_canvas.create_image(
-                0, 0, 
-                anchor=tk.NW, 
-                image=self.cropped_tk_image
-            )
-            return resized
-        return None
+        #to resize and display the image in the screen 
+        if not image:
+            return None
+        
+        # Calculating new dimensions by scaling
+        new_width = max(1, int(image.width * scale_percent / 100))
+        new_height = max(1, int(image.height * scale_percent / 100))
 
+        # To resize the image using high-quality resampling
+        resized_image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+
+        # To aConvert to Tkinter-compatible image
+        self.cropped_tk_image = ImageTk.PhotoImage(resized_image)
+
+        # Clear the canvas and display the resized image
+        self.cropped_canvas.delete("all")
+        self.cropped_canvas.create_image(
+            0, 0, anchor=tk.NW, image=self.cropped_tk_image
+        )
+
+        return resized_image
 class ImageSaver:
     def save_image(self, image):
         if image:
