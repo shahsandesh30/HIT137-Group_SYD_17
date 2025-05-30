@@ -5,26 +5,27 @@ import os
 
 # initialize Pygame
 pygame.init()
+
 # screen width and height
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 FPS = 30
 
-# different colors to be used in the game
+# different colors to be used within the game
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 
-# Get the directory of the current script
+# Get the directory of the current script to run the program
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Player Class
+# defining player class
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        # Construct the path to the image dynamically
+        # dynamic path to image
         image_path = os.path.join(BASE_DIR, "assets", "player.png")
         self.original_image = pygame.image.load(image_path).convert_alpha()  # Keep the original image
         self.image = pygame.transform.scale(self.original_image, (80, 100))
@@ -90,30 +91,32 @@ class Player(pygame.sprite.Sprite):
         if self.rect.right > SCREEN_WIDTH:
             self.rect.right = SCREEN_WIDTH
 
-# Projectile Class
+# define projectile class
 class Projectile(pygame.sprite.Sprite):
     def __init__(self, x, y, direction="right"):
         super().__init__()
-        self.image = pygame.Surface([10, 5])
+
+        # bullet surface with colour red
+        self.image = pygame.Surface((10, 5))
         self.image.fill(RED)
         self.rect = self.image.get_rect()
 
-        # Adjust the starting position of the bullet
-        if direction == "right":
-            self.rect.x = x + 30  # Offset to match the gunpoint (right side of the player)
-        else:  # direction == "left"
-            self.rect.x = x - 30  # Offset to match the gunpoint (left side of the player)
+        # bullet starting position
+        offset = 30 if direction == "right" else -30
+        self.rect.x = x + offset
+        self.rect.y = y + 5  # Slight vertical adjustment to align with the gun
 
-        self.rect.y = y + 5  # Adjust vertically to align with the gunpoint
+        # Set movement speed and damage
         self.speed = 10 if direction == "right" else -10
         self.damage = 25
+
 
     def update(self):
         self.rect.x += self.speed
         if self.rect.right < 0 or self.rect.left > SCREEN_WIDTH:
             self.kill()
 
-# Enemy Class
+# define enemy class
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, x, y, health, enemy_type):
         super().__init__()
@@ -202,15 +205,19 @@ class Game:
         self.spawn_level()
 
     def level_start_screen(self):
-        """Display the level number at the start of each level."""
+        """Show the current level number before the level begins."""
         self.screen.fill(BLACK)
+
+        # Create and render the level text
         font = pygame.font.SysFont(None, 72)
         text = font.render(f"Level {self.level}", True, WHITE)
         self.screen.blit(text, (SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 - 50))
+
         pygame.display.flip()
 
-        # Pause for a moment to display the level
-        pygame.time.delay(2000)  # 2000 milliseconds = 2 seconds
+        # Wait 2 seconds before starting the level
+        pygame.time.delay(2000)
+
 
     def spawn_level(self):
         """Spawn enemies and collectibles for the current level."""
@@ -273,41 +280,41 @@ class Game:
         pygame.draw.rect(surface, WHITE, outline_rect, 2)
 
     def update(self):
-        """Update all game elements."""
+        """Handle game updates for all elements each frame."""
         self.all_sprites.update()
 
-        # Decrease the level start timer
+        # Countdown delay before level starts
         if self.level_start_timer > 0:
             self.level_start_timer -= 1
 
-        # Handle collisions
-        for proj in self.projectiles:
-            hits = pygame.sprite.spritecollide(proj, self.enemies, False)
+        # Check if any projectile hits an enemy
+        for projectile in self.projectiles:
+            hits = pygame.sprite.spritecollide(projectile, self.enemies, False)
             for enemy in hits:
-                enemy.take_damage(proj.damage)
-                proj.kill()
+                enemy.take_damage(projectile.damage)
+                projectile.kill()
                 self.player.score += 10
 
-        collectible_hits = pygame.sprite.spritecollide(self.player, self.collectibles, False)
-        for item in collectible_hits:
+        # Check if the player touches any collectible
+        for item in pygame.sprite.spritecollide(self.player, self.collectibles, False):
             item.apply_to_player(self.player)
 
-        enemy_hits = pygame.sprite.spritecollide(self.player, self.enemies, False)
-        for enemy in enemy_hits:
+        # Check if the player collides with any enemy
+        for enemy in pygame.sprite.spritecollide(self.player, self.enemies, False):
             self.player.take_damage(10)
 
-        # Check if all enemies are defeated
+        # Move to next level if all enemies are defeated
         if not self.enemies:
             self.level += 1
             if self.level > 3:
                 self.you_win_screen()
                 return
-            else:
-                self.spawn_level()
+            self.spawn_level()
 
-        # Check if the player is out of lives
+        # End the game if the player has no lives left
         if self.player.lives <= 0:
             self.running = False
+
 
     def draw(self):
         """Draw all game elements, including the level number."""
